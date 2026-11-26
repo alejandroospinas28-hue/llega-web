@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Llega · que el medicamento llegue</title>
+<meta name="description" content="Asistente de inteligencia artificial por WhatsApp y llamada para pacientes con medicamentos pendientes. Versión de prueba.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #10292c;
+    --ink-2: #2c4447;
+    --muted: #5d6f71;
+    --paper: #f6f2ea;
+    --card: #fffdf9;
+    --line: #e4ddd0;
+    --teal: #0b6e6b;
+    --teal-2: #0e8c88;
+    --mint: #d9eee8;
+    --coral: #d6492f;
+    --coral-bg: #fbe5df;
+    --amber: #b7791f;
+    --amber-bg: #fbefd8;
+    --ok: #2f7d4f;
+    --ok-bg: #e1f1e6;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16,41,44,.06), 0 6px 24px rgba(16,41,44,.06);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 16px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: Fraunces, Georgia, serif; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+  a { color: inherit; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+
+  /* Encabezado */
+  header.top { position: sticky; top: 0; z-index: 20; background: rgba(246,242,234,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  header.top .wrap { display: flex; align-items: center; gap: 18px; height: 62px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: Fraunces, serif; font-size: 22px; font-weight: 650; text-decoration: none; }
+  .logo-mark { width: 30px; height: 30px; border-radius: 9px; background: var(--teal); display: grid; place-items: center; }
+  .logo-mark svg { width: 18px; height: 18px; }
+  nav.links { margin-left: auto; display: flex; gap: 22px; font-size: 14px; color: var(--ink-2); }
+  nav.links a { text-decoration: none; }
+  nav.links a:hover { color: var(--teal); }
+  .badge { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: var(--amber-bg); color: var(--amber); white-space: nowrap; }
+
+  /* Portada */
+  .hero { padding: 72px 0 56px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.15fr .85fr; gap: 48px; align-items: center; }
+  .eyebrow { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--teal); margin-bottom: 14px; }
+  .hero h1 { font-size: clamp(40px, 5.4vw, 64px); line-height: 1.03; }
+  .hero h1 em { font-style: normal; color: var(--teal); }
+  .hero p.lead { font-size: 19px; color: var(--ink-2); max-width: 34em; margin: 22px 0 30px; }
+  .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 9px; border: 0; cursor: pointer; font: 600 15px Inter, sans-serif; padding: 13px 20px; border-radius: 11px; text-decoration: none; transition: transform .12s ease, background .12s ease; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: var(--teal-2); }
+  .btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+  .btn-ghost:hover { background: rgba(16,41,44,.05); }
+  .btn svg { width: 18px; height: 18px; }
+  .note { font-size: 13px; color: var(--muted); margin-top: 14px; }
+
+  /* Teléfono de muestra */
+  .phone { background: #0f2427; border-radius: 30px; padding: 12px; box-shadow: var(--shadow); max-width: 360px; justify-self: center; width: 100%; }
+  .phone-in { background: #e9e3d8; border-radius: 22px; overflow: hidden; }
+  .phone-bar { background: var(--teal); color: #fff; padding: 12px 14px; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .phone-bar .av { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.2); display: grid; place-items: center; font-weight: 600; }
+  .phone-bar small { display: block; opacity: .8; font-size: 11px; }
+  .chat { padding: 14px 12px 18px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; line-height: 1.4; min-height: 330px; }
+  .msg { max-width: 84%; padding: 8px 11px; border-radius: 12px; opacity: 0; transform: translateY(6px); animation: entra .4s ease forwards; }
+  .msg.in { background: #fff; align-self: flex-start; border-top-left-radius: 4px; }
+  .msg.out { background: #d6f2df; align-self: flex-end; border-top-right-radius: 4px; }
+  .msg:nth-child(1) { animation-delay: .2s } .msg:nth-child(2) { animation-delay: 1.1s } .msg:nth-child(3) { animation-delay: 2s }
+  .msg:nth-child(4) { animation-delay: 2.9s } .msg:nth-child(5) { animation-delay: 3.8s }
+  @keyframes entra { to { opacity: 1; transform: none; } }
+
+  /* Secciones */
+  section.block { padding: 64px 0; scroll-margin-top: 62px; }
+  section.block h2 { font-size: clamp(30px, 3.4vw, 40px); margin-bottom: 12px; }
+  section.block p.sub { color: var(--ink-2); max-width: 40em; margin: 0 0 34px; font-size: 17px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; }
+  .step .n { font-family: Fraunces, serif; font-size: 34px; color: var(--teal); line-height: 1; }
+  .step h3 { font-size: 20px; margin: 12px 0 8px; }
+  .step p { margin: 0; color: var(--ink-2); font-size: 15px; }
+
+  .rules { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; }
+  .rule { border-top: 3px solid var(--teal); padding: 14px 2px 0; }
+  .rule b { font-family: Fraunces, serif; font-size: 30px; display: block; line-height: 1.1; }
+  .rule span { font-size: 14px; color: var(--ink-2); display: block; margin-top: 6px; }
+  .rule small { display: block; font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .programs { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .program { background: var(--ink); color: #eef3f2; border-radius: var(--radius); padding: 28px; }
+  .program.alt { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .program h3 { font-size: 24px; margin-bottom: 10px; }
+  .program ul { margin: 14px 0 0; padding-left: 18px; }
+  .program li { margin: 6px 0; font-size: 15px; }
+  .program .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: rgba(255,255,255,.12); margin-bottom: 14px; }
+  .program.alt .tag { background: var(--amber-bg); color: var(--amber); }
+
+  /* Panel */
+  #panel { background: #ece6da; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .panel-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+  .clock { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; min-width: 260px; }
+  .clock .lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .clock .t { font-family: Fraunces, serif; font-size: 22px; margin-top: 2px; }
+  .clock .adv { font-size: 12px; color: var(--amber); font-weight: 600; }
+  .live { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); }
+  .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgba(47,125,79,.5); animation: pulso 2s infinite; }
+  .live.off i { background: var(--coral); animation: none; }
+  @keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(47,125,79,.45) } 70% { box-shadow: 0 0 0 8px rgba(47,125,79,0) } 100% { box-shadow: 0 0 0 0 rgba(47,125,79,0) } }
+
+  .controls { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .controls .lbl { font-size: 13px; font-weight: 600; margin-right: 4px; }
+  .controls input { font: 15px Inter, sans-serif; width: 110px; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line); background: #fff; letter-spacing: .2em; }
+  .chip-btn { font: 600 13px Inter, sans-serif; padding: 9px 13px; border-radius: 9px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  .chip-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .chip-btn.danger:hover { border-color: var(--coral); color: var(--coral); }
+  .chip-btn:disabled { opacity: .5; cursor: wait; }
+  .controls .sep { flex: 1; }
+  .toast { font-size: 13px; color: var(--ink-2); }
+
+  .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 22px; align-items: start; }
+  .cases { display: grid; gap: 16px; }
+  .empty { background: var(--card); border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 34px; text-align: center; color: var(--muted); }
+  .empty b { display: block; font-family: Fraunces, serif; color: var(--ink); font-size: 20px; margin-bottom: 6px; }
+  .case { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .case-h { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .case-h .av { width: 38px; height: 38px; border-radius: 50%; background: var(--mint); color: var(--teal); display: grid; place-items: center; font-weight: 600; flex: none; }
+  .case-h .who b { display: block; font-size: 16px; }
+  .case-h .who span { font-size: 13px; color: var(--muted); }
+  .state { margin-left: auto; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 99px; background: var(--mint); color: var(--teal); white-space: nowrap; }
+  .state.warn { background: var(--amber-bg); color: var(--amber); }
+  .state.bad { background: var(--coral-bg); color: var(--coral); }
+  .state.good { background: var(--ok-bg); color: var(--ok); }
+  .case-b { padding: 16px 18px; display: grid; gap: 16px; }
+  .sec-t { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 8px; }
+  .meds { display: flex; flex-wrap: wrap; gap: 8px; }
+  .med { font-size: 14px; padding: 7px 11px; border-radius: 9px; background: #f3eee5; display: inline-flex; align-items: center; gap: 7px; }
+  .med.done { background: var(--ok-bg); color: var(--ok); }
+  .med .ic { width: 16px; height: 16px; }
+  .where { font-size: 14px; color: var(--ink-2); }
+  .timer { display: grid; gap: 10px; }
+  .tline { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; font-size: 14px; }
+  .tline .when { font-size: 13px; color: var(--muted); text-align: right; }
+  .tline .when.bad { color: var(--coral); font-weight: 600; }
+  .tline .when.good { color: var(--ok); font-weight: 600; }
+  .bar { grid-column: 1 / -1; height: 6px; border-radius: 99px; background: #eee7da; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--teal); border-radius: 99px; transition: width .6s ease; }
+  .bar i.bad { background: var(--coral); }
+  .bar i.good { background: var(--ok); }
+  .pet { background: #f3eee5; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  .visits { display: grid; gap: 6px; }
+  .visit { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; font-size: 14px; }
+  .visit .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--teal); justify-self: center; }
+  .visit.conf .dot { background: var(--teal); }
+  .visit .win { font-size: 12px; color: var(--muted); }
+
+  .side { display: grid; gap: 16px; }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .box h3 { font-size: 18px; margin-bottom: 10px; }
+  .ae { border-left: 3px solid var(--coral); padding: 6px 0 6px 12px; margin-bottom: 10px; font-size: 14px; }
+  .ae b { display: block; }
+  .ae span { font-size: 12px; color: var(--muted); }
+  .ae.grave { background: var(--coral-bg); border-radius: 0 8px 8px 0; }
+  .feed { list-style: none; margin: 0; padding: 0; max-height: 520px; overflow: auto; }
+  .feed li { display: grid; grid-template-columns: 10px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid #efe9de; font-size: 14px; }
+  .feed li:last-child { border-bottom: 0; }
+  .feed .d { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); margin-top: 7px; }
+  .feed .d.alert { background: var(--coral); }
+  .feed .d.reloj { background: var(--amber); }
+  .feed small { display: block; color: var(--muted); font-size: 12px; }
+  .muted { color: var(--muted); font-size: 14px; }
+
+  footer { padding: 40px 0 60px; font-size: 13px; color: var(--muted); }
+  footer .wrap { display: grid; gap: 8px; }
+
+  @media (max-width: 900px) {
+    .hero .wrap, .grid, .programs { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .rules { grid-template-columns: 1fr 1fr; }
+    nav.links { display: none; }
+    .hero { padding-top: 44px; }
+    .clock .t { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .msg { animation: none; opacity: 1; transform: none; }
+    .live i { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </span>
+      Llega
+    </a>
+    <nav class="links">
+      <a href="#como">Cómo funciona</a>
+      <a href="#programas">Programas</a>
+      <a href="#panel">Panel en vivo</a>
+    </nav>
+    <span class="badge">Beta · datos de prueba</span>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <div class="eyebrow">Acompañamiento a pacientes por WhatsApp y llamada</div>
+        <h1>Que el medicamento <em>llegue</em>, a tiempo.</h1>
+        <p class="lead">Llega es un asistente de inteligencia artificial que acompaña a pacientes con medicamentos de alto costo. Abre el caso cuando la farmacia queda debiendo, cuenta los plazos que pone la norma, avisa antes de que se venzan y, con autorización del paciente, deja lista la petición a la EPS.</p>
+        <div class="ctas">
+          <a class="btn btn-primary" href="https://wa.me/573132457240?text=Hola%20Llega" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+            Escribirle a Llega
+          </a>
+          <button class="btn btn-ghost" id="btn-voz" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+            Hablarle desde aquí
+          </button>
+        </div>
+        <p class="note">+57 313 245 7240 · Versión de prueba: use datos inventados, no sus datos reales.</p>
+      </div>
+
+      <div class="phone" aria-label="Ejemplo de conversación">
+        <div class="phone-in">
+          <div class="phone-bar"><span class="av">L</span><div>Llega<small>asistente de IA</small></div></div>
+          <div class="chat">
+            <div class="msg out">Hola, en la farmacia me quedaron debiendo el Imatinib</div>
+            <div class="msg in">Lo siento. Le ayudo con eso. ¿En qué punto fue a reclamar y qué EPS tiene?</div>
+            <div class="msg out">Cruz Verde de la 100, Sanitas</div>
+            <div class="msg in">Listo, quedó abierto su caso. Tienen hasta el viernes a las 3:05 p. m. para entregárselo, y puede ser a domicilio.</div>
+            <div class="msg in">Le escribo ese día para ver si llegó. Si no, le explico qué sigue.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="como">
+    <div class="wrap">
+      <h2>Cómo funciona</h2>
+      <p class="sub">El paciente no tiene que instalar nada ni aprenderse la norma. Escribe o llama como lo haría con cualquier persona.</p>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h3>Cuenta qué pasó</h3><p>Por WhatsApp, nota de voz o llamada. Llega le dice que es una inteligencia artificial y le pide permiso antes de guardar datos.</p></div>
+        <div class="step"><div class="n">2</div><h3>Llega abre el caso</h3><p>Registra el medicamento, la farmacia y la EPS, y empieza a contar los plazos con festivos de Colombia incluidos.</p></div>
+        <div class="step"><div class="n">3</div><h3>Avisa y destraba</h3><p>Si se vence el plazo, le escribe al paciente, le ofrece otro punto de entrega y, si lo autoriza, prepara la petición a la EPS.</p></div>
+      </div>
+      <div class="rules">
+        <div class="rule"><b>48 horas</b><span>para entregar lo que quedó pendiente, también a domicilio</span><small>Resolución 1604 de 2013</small></div>
+        <div class="rule"><b>Red alterna</b><span>si se vencen las 48 horas, puede reclamar en otro punto</span><small>Seguimiento a las 24 horas</small></div>
+        <div class="rule"><b>15 días hábiles</b><span>para que la EPS responda una petición, sin contar festivos</span><small>Ley 1755 de 2015</small></div>
+        <div class="rule"><b>Eventos adversos</b><span>cualquier síntoma nuevo queda registrado para el equipo del programa</span><small>Sin consejos médicos</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="programas" style="padding-top:20px">
+    <div class="wrap">
+      <h2>Dos programas, el mismo acompañamiento</h2>
+      <p class="sub">La misma conversación sirve para el paciente que espera un medicamento y para el que participa en un estudio clínico.</p>
+      <div class="programs">
+        <div class="program">
+          <span class="tag">Programa 1</span>
+          <h3>Medicamentos pendientes</h3>
+          <ul>
+            <li>Abre el caso con medicamento, farmacia, punto y EPS</li>
+            <li>Cuenta las 48 horas y los 30 días de la fórmula</li>
+            <li>Registra entregas completas o parciales</li>
+            <li>Prepara el derecho de petición, solo con autorización</li>
+          </ul>
+        </div>
+        <div class="program alt">
+          <span class="tag">Programa 2 · estudio ficticio</span>
+          <h3>Pacientes en estudios clínicos</h3>
+          <ul>
+            <li>Arma el calendario de visitas con sus ventanas</li>
+            <li>Agenda y confirma cada visita dentro de la ventana</li>
+            <li>Pregunta por síntomas en cada contacto</li>
+            <li>El estudio LLG-DEMO-01 no existe: es solo para la demostración</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="panel">
+    <div class="wrap">
+      <div class="panel-head">
+        <div>
+          <h2>Panel en vivo</h2>
+          <p class="sub" style="margin-bottom:0">Lo que el equipo del programa ve mientras Llega conversa con los pacientes. Se actualiza solo.</p>
+        </div>
+        <div class="clock">
+          <div class="lbl">Hora de la demo</div>
+          <div class="t" id="reloj">…</div>
+          <div class="adv" id="adelanto"></div>
+          <div class="live" id="live"><i></i><span>conectando</span></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <span class="lbl">Controles de la demo</span>
+        <input id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="PIN" autocomplete="off" aria-label="PIN de la demo">
+        <button class="chip-btn" data-h="24">+1 día</button>
+        <button class="chip-btn" data-h="49">+49 horas</button>
+        <button class="chip-btn" data-h="168">+7 días</button>
+        <button class="chip-btn" data-h="720">+30 días</button>
+        <span class="sep"></span>
+        <span class="toast" id="toast"></span>
+        <button class="chip-btn danger" id="reiniciar">Reiniciar demo</button>
+      </div>
+
+      <div class="grid">
+        <div class="cases" id="casos"></div>
+        <aside class="side">
+          <div class="box">
+            <h3>Eventos adversos</h3>
+            <div id="eventos"><p class="muted">Ninguno reportado.</p></div>
+          </div>
+          <div class="box">
+            <h3>Lo que va pasando</h3>
+            <ul class="feed" id="feed"><li><span></span><span class="muted">Todavía no hay actividad.</span></li></ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>Llega es una versión de prueba. Todos los datos son de prueba y el estudio LLG-DEMO-01 es ficticio. En esta versión Llega no llama a farmacias ni radica documentos de verdad.</div>
+    <div>Llega no da consejos médicos ni reemplaza a su médico. Ante una urgencia, llame al 123.</div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const SUPA = "https://uwtfnmmmaficyolmoxma.supabase.co";
+  const KEY = "sb_publishable_Ef_og3qZb4WePIp-jO-N3w_TJSmsJZE"; // llave pública: solo puede leer el resumen de prueba
+  const AGENTE = "agent_8301m8b293qvfzer3twn45r6kjn7";
+  const TZ = "America/Bogota";
+
+  const $ = (s) => document.querySelector(s);
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  const fFecha = new Intl.DateTimeFormat("es-CO", { timeZone: TZ, weekday: "long", day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
+  const fCorta = new Intl.DateTimeFormat("es-CO", { timeZone: TZ, weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  const fDia = new Intl.DateTimeFormat("es-CO", { timeZone: TZ, day: "numeric", month: "short" });
+  const fecha = (t) => t ? fFecha.format(new Date(t)) : "";
+  const corta = (t) => t ? fCorta.format(new Date(t)) : "";
+  const dia = (t) => t ? fDia.format(new Date(t)) : "";
+
+  function relativo(t, ahora) {
+    const h = (new Date(t) - ahora) / 36e5;
+    const abs = Math.abs(h);
+    const txt = abs < 1 ? `${Math.max(1, Math.round(abs * 60))} min` : abs < 48 ? `${Math.round(abs)} h` : `${Math.round(abs / 24)} días`;
+    return h >= 0 ? `en ${txt}` : `hace ${txt}`;
+  }
+
+  const ESTADOS = {
+    abierto: ["Activo", ""], esperando_entrega: ["Esperando entrega", ""], red_alterna: ["Red alterna", "warn"],
+    peticion: ["Petición radicada", "warn"], resuelto: ["Entregado", "good"], cerrado: ["Cerrado", ""],
+  };
+  const PLAZOS = {
+    domicilio_48h: "Entrega del pendiente (48 h)", reactivacion_30d: "Reactivación de la fórmula (30 días)",
+    seguimiento: "Seguimiento en red alterna", respuesta_peticion: "Respuesta de la EPS (15 días hábiles)",
+    recordatorio_visita: "Recordatorio de visita", aviso_evento_adverso: "Aviso al equipo",
+  };
+  const EVENTOS = {
+    consentimiento: "dio consentimiento", caso_abierto: "abrió un caso de pendiente", entrega_parcial: "recibió una entrega parcial",
+    entrega_completa: "recibió todo lo pendiente", red_alterna: "pasó a red alterna", autoriza_peticion: "autorizó la petición",
+    peticion_redactada: "tiene la petición redactada", peticion_radicada: "radicó la petición", evento_adverso: "reportó un síntoma",
+    inscrito_ensayo: "quedó inscrito en el estudio ficticio", visita_confirmada: "confirmó una visita", aviso_llega: "recibió un aviso de Llega",
+    plazo_disparado: "tiene un plazo vencido", plazo_cumplido: "cumplió un plazo", plazo_vencido: "venció un plazo",
+    reloj_adelantado: "Se adelantó el reloj de la demo",
+  };
+  const AVISOS = {
+    domicilio_48h: ["se vencieron las 48 horas: Llega le pregunta si le llegó", true],
+    seguimiento: ["Llega le pregunta si reclamó en la red alterna", false],
+    respuesta_peticion: ["se vencieron los 15 días hábiles de la petición", true],
+    reactivacion_30d: ["el pendiente cumplió 30 días", true],
+    recordatorio_visita: ["Llega le recuerda su próxima visita", false],
+    aviso_evento_adverso: ["el equipo del programa recibió el aviso del síntoma", true],
+  };
+
+  const ic = {
+    ok: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    wait: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/></svg>',
+    frio: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M5 7l14 10M19 7L5 17"/></svg>',
+  };
+
+  function plazoHTML(p, inicio, ahora) {
+    const vence = new Date(p.vence_at);
+    let cls = "", txt = relativo(p.vence_at, ahora), pct = 0, barCls = "";
+    if (p.estado === "cumplido") { cls = "good"; txt = "cumplido"; pct = 100; barCls = "good"; }
+    else if (p.estado === "cancelado") { txt = "cancelado"; }
+    else if (vence <= ahora || p.estado === "vencido" || p.estado === "disparado") { cls = "bad"; txt = "venció " + relativo(p.vence_at, ahora); pct = 100; barCls = "bad"; }
+    else if (inicio) { pct = Math.min(100, Math.max(2, ((ahora - new Date(inicio)) / (vence - new Date(inicio))) * 100)); }
+    return `<div class="tline"><span>${esc(PLAZOS[p.tipo] || p.tipo)} <span class="muted">· ${esc(corta(p.vence_at))}</span></span>
+      <span class="when ${cls}">${esc(txt)}</span>
+      ${inicio || cls ? `<div class="bar"><i class="${barCls}" style="width:${pct}%"></i></div>` : ""}</div>`;
+  }
+
+  function casoHTML(c, ahora) {
+    const [est, estCls] = ESTADOS[c.estado] || [c.estado, ""];
+    const p = c.paciente || {};
+    const ini = (p.nombre || "?").trim().charAt(0).toUpperCase();
+    const meta = [p.eps, p.ciudad, p.wa].filter(Boolean).map(esc).join(" · ");
+    let cuerpo = "";
+
+    if (c.tipo === "pendiente") {
+      const meds = (c.medicamentos || []).map((m) =>
+        `<span class="med ${m.entregado ? "done" : ""}">${m.entregado ? ic.ok : ic.wait}${esc(m.nombre)}${m.concentracion ? ` <span class="muted">${esc(m.concentracion)}</span>` : ""}${m.cadena_frio ? ic.frio : ""}</span>`).join("");
+      const donde = [c.gestor, c.punto].filter(Boolean).map(esc).join(" · ");
+      const plazos = (c.plazos || []).filter((x) => x.tipo !== "aviso_evento_adverso" && x.tipo !== "recordatorio_visita")
+        .map((x) => plazoHTML(x, x.tipo === "domicilio_48h" ? c.pendiente_desde : null, ahora)).join("");
+      const pets = (c.peticiones || []).map((x) => `<div class="pet"><b>Derecho de petición</b> · ${x.estado === "radicada" ? `radicado ${esc(x.radicado)}, la EPS debe responder a más tardar el ${esc(fecha(x.vence_at))}` : "borrador listo"} <span class="muted">(la radica ${x.quien === "llega" ? "Llega con autorización" : "el paciente"})</span></div>`).join("");
+      cuerpo = `<div><div class="sec-t">Medicamentos</div><div class="meds">${meds || '<span class="muted">Sin medicamentos</span>'}</div></div>
+        ${donde ? `<div class="where">${donde}${c.pendiente_desde ? ` · pendiente desde ${esc(corta(c.pendiente_desde))}` : ""}</div>` : ""}
+        ${plazos ? `<div><div class="sec-t">Plazos</div><div class="timer">${plazos}</div></div>` : ""}
+        ${pets}`;
+    } else {
+      const vis = (c.visitas || []).map((v) => `<div class="visit ${v.estado === "confirmada" ? "conf" : ""}"><span class="dot"></span>
+        <span>${esc(v.nombre)} <span class="win">${esc(dia(v.ventana_inicio))} a ${esc(dia(v.ventana_fin))}</span></span>
+        <span class="win">${v.estado === "confirmada" ? "confirmada" : new Date(v.ventana_fin) < ahora ? "ventana cerrada" : ""}</span></div>`).join("");
+      cuerpo = `<div class="where">${esc(c.resumen || "Estudio ficticio")}</div>
+        <div><div class="sec-t">Visitas</div><div class="visits">${vis}</div></div>`;
+    }
+    return `<article class="case"><div class="case-h"><span class="av">${esc(ini)}</span>
+      <div class="who"><b>${esc(p.nombre || "Paciente sin nombre")}</b><span>${meta}</span></div>
+      <span class="state ${estCls}">${esc(c.tipo === "ensayo" ? "Estudio ficticio" : est)}</span></div>
+      <div class="case-b">${cuerpo}</div></article>`;
+  }
+
+  function pintar(d) {
+    const ahora = new Date(d.ahora);
+    $("#reloj").textContent = fecha(d.ahora);
+    $("#adelanto").textContent = d.reloj_horas > 0 ? `Adelantado ${d.reloj_horas} horas para la demo` : "";
+
+    const casos = d.casos || [];
+    $("#casos").innerHTML = casos.length ? casos.map((c) => casoHTML(c, ahora)).join("")
+      : `<div class="empty"><b>Todavía no hay pacientes</b>Escríbale a Llega por WhatsApp o háblele desde esta página. El caso aparece aquí apenas lo abra.</div>`;
+
+    const ev = d.eventos_adversos || [];
+    $("#eventos").innerHTML = ev.length ? ev.map((e) => `<div class="ae ${e.gravedad === "grave" ? "grave" : ""}"><b>${esc(e.descripcion)}</b>
+      <span>${esc(e.paciente || "")}${e.medicamento ? " · " + esc(e.medicamento) : ""} · ${esc(e.gravedad.replace("_", " "))} · ${esc(corta(e.reportado_at))}</span></div>`).join("")
+      : '<p class="muted">Ninguno reportado.</p>';
+
+    const feed = (d.linea_de_tiempo || []).filter((e) => e.tipo !== "plazo_disparado");
+    $("#feed").innerHTML = feed.length ? feed.map((e) => {
+      const quien = e.paciente ? `<b>${esc(e.paciente)}</b> ` : "";
+      let texto = EVENTOS[e.tipo] || e.tipo, color = "";
+      if (e.tipo === "evento_adverso" || e.tipo === "plazo_vencido") color = "alert";
+      if (e.tipo === "reloj_adelantado") { color = "reloj"; texto += e.detalle?.horas ? ` ${e.detalle.horas} horas` : ""; }
+      if (e.tipo === "aviso_llega") {
+        const [t, alerta] = AVISOS[e.detalle?.tipo] || ["recibió un aviso de Llega", false];
+        texto = t; color = alerta ? "alert" : "reloj";
+      }
+      if (e.tipo === "plazo_cumplido" && e.detalle?.tipo) texto += ` · ${PLAZOS[e.detalle.tipo] || e.detalle.tipo}`;
+      return `<li><span class="d ${color}"></span><span>${quien}${esc(texto)}<small>${esc(corta(e.ocurrido_at))}</small></span></li>`;
+    }).join("") : '<li><span></span><span class="muted">Todavía no hay actividad.</span></li>';
+  }
+
+  let fallos = 0;
+  async function cargar() {
+    try {
+      const r = await fetch(`${SUPA}/rest/v1/rpc/panel_snapshot`, {
+        method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: "{}",
+      });
+      if (!r.ok) throw new Error(r.status);
+      pintar(await r.json());
+      fallos = 0;
+      $("#live").className = "live"; $("#live span").textContent = "en vivo";
+    } catch (e) {
+      fallos++;
+      if (fallos > 1) { $("#live").className = "live off"; $("#live span").textContent = "sin conexión, reintentando"; }
+    }
+  }
+  cargar();
+  setInterval(() => { if (!document.hidden) cargar(); }, 3000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) cargar(); });
+
+  // Controles de la demo
+  try { $("#pin").value = sessionStorage.getItem("llega_pin") || ""; } catch (e) {}
+  async function demo(cuerpo) {
+    const pin = $("#pin").value.trim();
+    if (!pin) { $("#toast").textContent = "Escriba el PIN primero"; $("#pin").focus(); return; }
+    try { sessionStorage.setItem("llega_pin", pin); } catch (e) {}
+    document.querySelectorAll(".controls button").forEach((b) => (b.disabled = true));
+    $("#toast").textContent = "…";
+    try {
+      const r = await fetch(`${SUPA}/functions/v1/llega-demo`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin, ...cuerpo }),
+      });
+      const d = await r.json();
+      if (!d.ok) { $("#toast").textContent = d.error || "No se pudo"; return; }
+      const avisos = (d.avisos || []).filter((a) => a.motivo !== "aviso interno");
+      $("#toast").textContent = cuerpo.accion === "reiniciar" ? "Demo reiniciada"
+        : avisos.length ? `${avisos.length} aviso(s): ` + avisos.map((a) => `${PLAZOS[a.tipo] || a.tipo}${a.enviado ? " enviado por WhatsApp" : ""}`).join(", ")
+        : "Reloj adelantado";
+      cargar();
+    } catch (e) {
+      $("#toast").textContent = "Sin conexión";
+    } finally {
+      document.querySelectorAll(".controls button").forEach((b) => (b.disabled = false));
+    }
+  }
+  document.querySelectorAll("[data-h]").forEach((b) => b.addEventListener("click", () => demo({ accion: "adelantar", horas: Number(b.dataset.h) })));
+  $("#reiniciar").addEventListener("click", () => demo({ accion: "reiniciar" }));
+
+  // Voz desde el navegador: el widget de ElevenLabs se carga solo cuando lo piden
+  $("#btn-voz").addEventListener("click", () => {
+    if (!document.querySelector("elevenlabs-convai")) {
+      const w = document.createElement("elevenlabs-convai");
+      w.setAttribute("agent-id", AGENTE);
+      document.body.appendChild(w);
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/@elevenlabs/convai-widget-embed";
+      s.async = true;
+      document.body.appendChild(s);
+    }
+    $("#btn-voz").textContent = "Abajo a la derecha aparece Llega";
+  });
+})();
+</script>
+</body>
+</html>
